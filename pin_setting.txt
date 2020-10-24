@@ -1,0 +1,162 @@
+#include <AccelStepper.h>
+#include <MultiStepper.h>
+
+#define DOF                        5
+
+#define STEPPER1                   0
+#define STEPPER2                   1
+#define STEPPER3                   2
+#define STEPPER4                   3
+#define STEPPER5                   4
+
+#define STEPPER5_STEP_PIN         54
+#define STEPPER5_DIR_PIN          55
+#define STEPPER5_ENABLE_PIN       38
+#define STEPPER5_MIN_PIN           3
+#define STEPPER5_MAX_PIN           2
+
+#define STEPPER4_STEP_PIN         60
+#define STEPPER4_DIR_PIN          61
+#define STEPPER4_ENABLE_PIN       56
+#define STEPPER4_MIN_PIN          14
+#define STEPPER4_MAX_PIN          15
+
+#define STEPPER3_STEP_PIN         46
+#define STEPPER3_DIR_PIN          48
+#define STEPPER3_ENABLE_PIN       62
+#define STEPPER3_MIN_PIN          18
+#define STEPPER3_MAX_PIN          19
+
+#define STEPPER1_STEP_PIN         26//shoulder 2
+#define STEPPER1_DIR_PIN          28
+#define STEPPER1_ENABLE_PIN       24
+
+#define STEPPER2_STEP_PIN         36
+#define STEPPER2_DIR_PIN          34
+#define STEPPER2_ENABLE_PIN       30
+ 
+#define LED_PIN                   13
+
+AccelStepper stepper1(AccelStepper::DRIVER, STEPPER1_STEP_PIN, STEPPER1_DIR_PIN);
+AccelStepper stepper2(AccelStepper::DRIVER, STEPPER2_STEP_PIN, STEPPER2_DIR_PIN);
+AccelStepper stepper3(AccelStepper::DRIVER, STEPPER3_STEP_PIN, STEPPER3_DIR_PIN);
+AccelStepper stepper4(AccelStepper::DRIVER, STEPPER4_STEP_PIN, STEPPER4_DIR_PIN);
+AccelStepper stepper5(AccelStepper::DRIVER, STEPPER5_STEP_PIN, STEPPER5_DIR_PIN);
+
+float max_speed[DOF] = {10, 100, 100, 1200, 100};
+float acceleration[DOF] = {1,1,1,1,1};
+
+long goal_position[DOF] = {0, 0, 0, 0, 0};
+long prev_goal_position[DOF] = {0, 0, 0, 0, 0};
+long step_goal_position[DOF] = {0, 0, 0, 0, 0};
+
+float start_speed[DOF] = {0, 0, 0, 0, 0};
+long finish_position[DOF] = {1000, 1000, 1000, 1000, 1000};
+
+float finish_max_speed[DOF] = {100, 100, 100, 100, 100};
+float finish_acceleration[DOF] = {50, 50, 50, 50, 50};
+
+//float step_time = 0; // dimension = [msec]
+//float step_time_weight = 0.0014; //8 * 0.0002616667 = 0.0021 -> 현재 1.5배 정도 빠르게 0.0014
+
+MultiStepper steppers;
+
+void stepper_setup();
+void setup() {
+  pinMode(LED_PIN  , OUTPUT);
+  pinMode(STEPPER1_STEP_PIN  , OUTPUT);
+  pinMode(STEPPER1_DIR_PIN   , OUTPUT);
+  pinMode(STEPPER1_ENABLE_PIN, OUTPUT);
+
+  pinMode(STEPPER2_STEP_PIN  , OUTPUT);
+  pinMode(STEPPER2_DIR_PIN   , OUTPUT);
+  pinMode(STEPPER2_ENABLE_PIN, OUTPUT);
+
+  pinMode(STEPPER3_STEP_PIN  , OUTPUT);
+  pinMode(STEPPER3_DIR_PIN   , OUTPUT);
+  pinMode(STEPPER3_ENABLE_PIN, OUTPUT);
+
+  pinMode(STEPPER4_STEP_PIN  , OUTPUT);
+  pinMode(STEPPER4_DIR_PIN   , OUTPUT);
+  pinMode(STEPPER4_ENABLE_PIN, OUTPUT);
+
+  pinMode(STEPPER5_STEP_PIN  , OUTPUT);
+  pinMode(STEPPER5_DIR_PIN   , OUTPUT);
+  pinMode(STEPPER5_ENABLE_PIN, OUTPUT);
+
+  digitalWrite(STEPPER1_ENABLE_PIN    , LOW);
+  digitalWrite(STEPPER2_ENABLE_PIN    , LOW);
+  digitalWrite(STEPPER3_ENABLE_PIN    , LOW);
+  digitalWrite(STEPPER4_ENABLE_PIN    , LOW);
+  digitalWrite(STEPPER5_ENABLE_PIN    , LOW);
+
+  stepper_setup(); //steppers에 넣어줌. 
+}
+/*
+  stepper 1 : 그리퍼 세로
+  stepper 2 : 그리퍼 가로
+  stepper 3 : 3번
+  stepper 4 : 2번
+*/
+void loop () {
+  digitalWrite(LED_PIN, HIGH);
+  delay(3000);
+  digitalWrite(LED_PIN, LOW);
+
+  goal_position[STEPPER1] = 0;   //shoulder1
+  goal_position[STEPPER2] = 0;  //shouelder2
+  goal_position[STEPPER3] = 0;   //
+  goal_position[STEPPER4] = 0;   //shoulder1 (0.72 degree / 1step)
+  goal_position[STEPPER5] = 200;   //shoulder2
+
+  steppers.moveTo(goal_position);
+  steppers.runSpeedToPosition();
+  digitalWrite(LED_PIN, HIGH);
+  delay(3000);
+  digitalWrite(LED_PIN, LOW);
+
+  goal_position[STEPPER1] = 0;
+  goal_position[STEPPER2] = 0;
+  goal_position[STEPPER3] = 0;
+  goal_position[STEPPER4] = 0;
+  goal_position[STEPPER5] = 0;
+
+  steppers.moveTo(goal_position);
+  steppers.runSpeedToPosition();
+  
+}
+
+ 
+
+void stepper_setup()
+{
+  stepper1.setMaxSpeed(max_speed[STEPPER1]);
+  stepper2.setMaxSpeed(max_speed[STEPPER2]);
+  stepper3.setMaxSpeed(max_speed[STEPPER3]);
+  stepper4.setMaxSpeed(max_speed[STEPPER4]);
+  stepper5.setMaxSpeed(max_speed[STEPPER5]);
+
+  stepper1.setAcceleration(acceleration[STEPPER1]);
+  stepper2.setAcceleration(acceleration[STEPPER2]);
+  stepper3.setAcceleration(acceleration[STEPPER3]);
+  stepper4.setAcceleration(acceleration[STEPPER4]);
+  stepper5.setAcceleration(acceleration[STEPPER5]);
+
+  stepper1.setCurrentPosition(0);
+  stepper2.setCurrentPosition(0);
+  stepper3.setCurrentPosition(0);
+  stepper4.setCurrentPosition(0);
+  stepper5.setCurrentPosition(0);
+
+  goal_position[STEPPER1] = 0;
+  goal_position[STEPPER2] = 0;
+  goal_position[STEPPER3] = 0;
+  goal_position[STEPPER4] = 0;
+  goal_position[STEPPER5] = 0;
+
+  steppers.addStepper(stepper1);
+  steppers.addStepper(stepper2);
+  steppers.addStepper(stepper3);
+  steppers.addStepper(stepper4);
+  steppers.addStepper(stepper5);
+}
